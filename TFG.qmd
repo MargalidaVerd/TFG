@@ -1,0 +1,81 @@
+---
+title: "TFG"
+author: "Margalida Verd Julià"
+format: html
+editor: visual
+---
+```{r}
+
+# packages loading
+
+library(tidyverse)
+library(readr)
+library(dplyr)
+
+# data loading
+
+tb_treatment <- read.csv("tub_treatment.csv", header = TRUE, colClasses = c("character", "character", "integer", "double", "double", "double"))
+tb_treatment %>% 
+  colnames()
+
+mortality <- read.csv("mortality.csv", header = TRUE, colClasses = c("character","character","character","character","double","character","character","character","double","double","double","double"), row.names = NULL)
+
+colnames(mortality) <- colnames(mortality)[2:ncol(mortality)]
+mortality <- mortality[1:(ncol(mortality)-1)]
+
+view(mortality)
+```
+
+```{r}
+# change variables names
+
+tb_treatment <- tb_treatment %>% 
+  rename(Country_Name = Entity, Country_Code = Code, New_TB_Cases = Treatment.success.rate..new.TB.cases, Treatment_MDR_TB = Treatment.success.rate.for.patients.treated.for.MDR.TB...., Treatment_XDR_TB = Treatment.success.rate..XDR.TB.cases  ) %>% 
+  glimpse()
+
+mortality <- mortality %>%  
+  rename(Number_Deaths = Number, Percent_CS_Death = Percentage.of.cause.specific.deaths.out.of.total.deaths, Age_Death_Rate = Age.standardized.death.rate.per.100.000.standard.population, Death_Rate = Death.rate.per.100.000.population, Country_Name = Country.Name,Country_Code = Country.Code, Region_Code = Region.Code, Region_Name = Region.Name) %>% 
+  glimpse()
+
+```
+
+
+```{r}
+# Select rows of interest in the mortality dataset
+
+mortality <- mortality %>% 
+  dplyr::filter(Sex == "All") 
+
+# Delete age variables
+mortality <- mortality %>% 
+  select(1:5,9:12)
+
+```
+
+```{r}
+# Join the datasets
+total <- mortality %>% 
+  left_join(tb_treatment %>% dplyr::select(-Country_Name),
+                                 by=c("Country_Code", "Year")) %>% 
+  dplyr::filter(Region_Code=="EU")
+
+```
+
+```{r}
+
+total %>% dplyr::select(Country_Code, Number_Deaths) %>% 
+  na.exclude() %>%  
+  group_by(Country_Code) %>% 
+  count() %>% 
+  arrange(desc(n)) %>% 
+  data.frame()
+
+total %>% dplyr::select(Country_Code, New_TB_Cases) %>% 
+  na.exclude() %>%  
+  group_by(Country_Code) %>% 
+  count() %>% 
+  arrange(desc(n)) %>% 
+  data.frame()
+```
+
+
