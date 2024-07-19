@@ -61,7 +61,14 @@ SHP_1$`Death rate per 100 000 population` = as.numeric(gsub(",","", SHP_1$`Death
 
 ```{r}
 SHP_1 %>% filter(Year=="2011", Sex=="All") %>% ggplot(aes(fill=Number))+geom_sf() +
-  scale_x_continuous(limits = c(-20, 35)) +
+  scale_x_continuous(limits = c(-25, 35)) +
   scale_y_continuous(limits = c(35, 75))+
+  scale_fill_gradient(name="Number of Deaths", low="white",high="red")
+```
+
+```{r}
+SHP_2 <- st_transform(SHP_1, 'EPSG:3082')
+SHP_2 %>% filter(Year=="2011", Sex=="All") %>% ggplot(aes(fill=Number))+
+  geom_sf(xlim=c(5067987, 18463513), ylim=c(10296403,14705317 )) +
   scale_fill_continuous(name="Number of Deaths")
 ```
