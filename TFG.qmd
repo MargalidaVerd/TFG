@@ -4,7 +4,7 @@ author: "Margalida Verd Julià"
 format: html
 editor: visual
 ---
-```{r}
+```{r, warning=FALSE, message=FALSE}
 
 # packages loading
 
@@ -23,7 +23,6 @@ mortality <- read.csv("mortality.csv", header = TRUE, colClasses = c("character"
 colnames(mortality) <- colnames(mortality)[2:ncol(mortality)]
 mortality <- mortality[1:(ncol(mortality)-1)]
 
-view(mortality)
 ```
 
 ```{r}
@@ -77,5 +76,83 @@ total %>% dplyr::select(Country_Code, New_TB_Cases) %>%
   arrange(desc(n)) %>% 
   data.frame()
 ```
+
+
+
+# Maps of Europe
+
+```{r, warning=FALSE}
+
+library(eurostat)
+library(leaflet)
+library(sf)
+library(scales)
+library(cowplot)
+library(ggthemes)
+library(giscoR)
+library(rnaturalearth)
+```
+
+```{r}
+world_map <- ne_countries(scale = 50, returnclass = 'sf')
+# the function ne_countries returns world country polygons at a specified scale
+```
+
+```{r}
+world_map %>% 
+  ggplot() +
+  geom_sf() 
+```
+
+```{r}
+# Europe
+world_map %>% 
+  ggplot() +
+  geom_sf() +
+  scale_x_continuous(limits = c(-20, 35)) +
+  scale_y_continuous(limits = c(35, 70))
+```
+
+
+```{r}
+europeanUnion <- c("Austria","Belgium","Bulgaria","Croatia","Cyprus",
+                   "Czech Rep.","Denmark","Estonia","Finland","France",
+                   "Germany","Greece","Hungary","Ireland","Italy","Latvia",
+                   "Lithuania","Luxembourg","Malta","Netherlands","Norway",
+                   "Poland","Portugal","Romania","Slovakia","Slovenia","Spain",
+                   "Sweden", "United Kingdom", "Iceland", "Switzerland",
+                   "Czechia", "Turkey")
+
+SHP_1 <- world_map %>%
+  filter(name %in% europeanUnion) %>% 
+  select(adm0_a3, name) %>% 
+  left_join(mortality, by = c("adm0_a3"="Country_Code")) 
+
+SHP_1$Death_Rate = as.numeric(gsub(",","", SHP_1$Death_Rate))
+```
+
+```{r}
+SHP_1 %>% filter(Year=="2011") %>% 
+  ggplot(aes(fill=Number_Deaths))+
+  geom_sf() +
+  scale_x_continuous(limits = c(-25, 35)) +
+  scale_y_continuous(limits = c(35, 75))+
+  scale_fill_gradient(name="Number of Deaths", low="white",high="red")
+```
+
+```{r}
+#geom_sf(xlim=c(5067987, 18463513), ylim=c(10296403,14705317))
+SHP_2 <- st_transform(SHP_1, 'EPSG:3082')
+SHP_2 %>% filter(Year=="2011") %>% 
+  ggplot(aes(fill=Number_Deaths))+
+  geom_sf() +
+  scale_x_continuous(limits = c(5067987, 18463513)) +
+  scale_y_continuous(limits = c(10296403,14705317))+
+  scale_fill_continuous(name="Number of Deaths")
+```
+
+
+
+
 
 
